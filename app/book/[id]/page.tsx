@@ -11,11 +11,9 @@ export default function BookPage() {
 
   const [listing, setListing] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-
-  // Form fields
+  const [selectedSlot, setSelectedSlot] = useState('')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
-  const [preferredDate, setPreferredDate] = useState('')
   const [notes, setNotes] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -28,7 +26,7 @@ export default function BookPage() {
         setListing(found || null)
       }
     } catch (error) {
-      console.error('Error loading listing:', error)
+      console.error(error)
     } finally {
       setLoading(false)
     }
@@ -36,22 +34,22 @@ export default function BookPage() {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault()
-    setIsSubmitting(true)
-
+    
     if (!name.trim() || !phone.trim()) {
       alert('Please fill in your name and phone number')
-      setIsSubmitting(false)
       return
     }
 
-    // Save booking details temporarily
+    if (!selectedSlot && listing?.availableSlots?.length > 0) {
+      alert('Please select an available time slot')
+      return
+    }
+
+    setIsSubmitting(true)
+
     const bookingData = {
       listingId: id,
       title: listing.title,
       price: listing.price,
       category: listing.category,
-      location: listing.location,
-      provider: listing.provider,
-      customerName: name,
-      customerPhone: phone,
-      preferredDate,
+      location
