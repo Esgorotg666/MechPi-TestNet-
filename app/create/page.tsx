@@ -11,9 +11,24 @@ export default function CreateListingPage() {
   const [category, setCategory] = useState('Oil Change')
   const [location, setLocation] = useState('')
   const [description, setDescription] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
+  const [imageUrls, setImageUrls] = useState<string[]>([''])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const addImageField = () => {
+    setImageUrls([...imageUrls, ''])
+  }
+
+  const updateImageUrl = (index: number, value: string) => {
+    const updated = [...imageUrls]
+    updated[index] = value
+    setImageUrls(updated)
+  }
+
+  const removeImageField = (index: number) => {
+    if (imageUrls.length === 1) return
+    setImageUrls(imageUrls.filter((_, i) => i !== index))
+  }
 
   const handleSubmit = (e: any) => {
     e.preventDefault()
@@ -24,6 +39,9 @@ export default function CreateListingPage() {
       if (!title.trim()) throw new Error('Please enter a service title')
       if (!price || Number(price) <= 0) throw new Error('Please enter a valid price')
 
+      // Filter out empty image URLs
+      const cleanImages = imageUrls.filter(url => url.trim() !== '')
+
       const newListing = {
         id: Date.now().toString(),
         title: title.trim(),
@@ -31,7 +49,7 @@ export default function CreateListingPage() {
         category,
         location: location.trim() || 'Not specified',
         description: description.trim(),
-        imageUrl: imageUrl.trim() || null,
+        images: cleanImages,
         provider: 'You',
         createdAt: new Date().toISOString(),
         status: 'Active',
@@ -45,4 +63,94 @@ export default function CreateListingPage() {
 
       router.push('/my-listings')
     } catch (err: any) {
-      console.error('Error saving listing:',
+      console.error('Error saving listing:', err)
+      setError(err.message || 'Failed to save listing. Please try again.')
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <main style={{ padding: '20px', fontFamily: 'system-ui', maxWidth: '500px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '20px' }}>
+        <Link href="/" style={{ color: '#7c3aed', textDecoration: 'none' }}>
+          ← Back
+        </Link>
+      </div>
+
+      <h1 style={{ marginBottom: '20px' }}>Create a Listing</h1>
+
+      {error && (
+        <div style={{
+          backgroundColor: '#fef2f2',
+          color: '#b91c1c',
+          padding: '12px',
+          borderRadius: '8px',
+          marginBottom: '16px',
+          fontSize: '14px'
+        }}>
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Service Title</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Mobile Oil Change"
+            required
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '16px' }}
+          />
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Price (π)</label>
+          <input
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder="25"
+            required
+            min="1"
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '16px' }}
+          />
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Category</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '16px' }}
+          >
+            <option>Oil Change</option>
+            <option>Diagnostics</option>
+            <option>Brakes</option>
+            <option>Battery / Electrical</option>
+            <option>Engine Work</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Location</label>
+          <input
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="e.g. Vista, CA"
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '16px' }}
+          />
+        </div>
+
+        {/* Image Gallery Section */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+            Images (optional)
+          </label>
+          
+          {imageUrls.map((url, index) => (
+            <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <input
