@@ -5,22 +5,10 @@ import Link from 'next/link'
 
 function StatusBadge({ status }: { status: string }) {
   const styles: any = {
-    Confirmed: {
-      backgroundColor: '#dcfce7',
-      color: '#166534'
-    },
-    Pending: {
-      backgroundColor: '#fef3c7',
-      color: '#92400e'
-    },
-    Completed: {
-      backgroundColor: '#e0e7ff',
-      color: '#3730a3'
-    },
-    Cancelled: {
-      backgroundColor: '#fee2e2',
-      color: '#991b1b'
-    }
+    Confirmed: { backgroundColor: '#dcfce7', color: '#166534' },
+    Pending: { backgroundColor: '#fef3c7', color: '#92400e' },
+    Completed: { backgroundColor: '#e0e7ff', color: '#3730a3' },
+    Cancelled: { backgroundColor: '#fee2e2', color: '#991b1b' }
   }
 
   const style = styles[status] || styles.Confirmed
@@ -68,6 +56,20 @@ export default function BookingsPage() {
       setLoading(false)
     }
   }, [])
+
+  const cancelBooking = (index: number) => {
+    const confirmed = window.confirm('Are you sure you want to cancel this booking?')
+    if (!confirmed) return
+
+    const updated = [...bookings]
+    updated[index] = {
+      ...updated[index],
+      status: 'Cancelled'
+    }
+
+    setBookings(updated)
+    localStorage.setItem('mechpi_bookings', JSON.stringify(updated))
+  }
 
   return (
     <main style={{ padding: '20px', fontFamily: 'system-ui', maxWidth: '600px', margin: '0 auto' }}>
@@ -138,6 +140,26 @@ export default function BookingsPage() {
                 <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#666' }}>
                   Note: {booking.notes}
                 </p>
+              )}
+
+              {/* Cancel Button */}
+              {booking.status !== 'Cancelled' && booking.status !== 'Completed' && (
+                <button
+                  onClick={() => cancelBooking(index)}
+                  style={{
+                    marginTop: '12px',
+                    backgroundColor: '#fee2e2',
+                    color: '#991b1b',
+                    border: 'none',
+                    padding: '8px 14px',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel Booking
+                </button>
               )}
             </div>
           ))}
