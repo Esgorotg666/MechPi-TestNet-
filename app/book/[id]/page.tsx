@@ -1,41 +1,57 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function BookPage() {
   const params = useParams()
   const router = useRouter()
-  const id = params.id
+  const id = params.id as string
 
-  const listings: any = {
-    "1": {
-      title: "Mobile Oil Change",
-      price: 25,
-      category: "Oil Change",
-      location: "Vista, CA",
-      provider: "MidnightMechanix"
-    },
-    "2": {
-      title: "OBD Diagnostic Scan",
-      price: 40,
-      category: "Diagnostics",
-      location: "San Diego Area",
-      provider: "DiagPro"
-    },
-    "3": {
-      title: "Brake Pad Replacement",
-      price: 120,
-      category: "Brakes",
-      location: "Inland Empire",
-      provider: "BrakeKing"
+  const [listing, setListing] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  // Form fields
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [preferredDate, setPreferredDate] = useState('')
+  const [notes, setNotes] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('mechpi_listings')
+      if (saved) {
+        const listings = JSON.parse(saved)
+        const found = listings.find((item: any) => item.id === id)
+        setListing(found || null)
+      }
+    } catch (error) {
+      console.error('Error loading listing:', error)
+    } finally {
+      setLoading(false)
     }
-  }
+  }, [id])
 
-  const listing = listings[id as string]
+  const handleSubmit = async (e: any) => {
+    e.preventDefault()
+    setIsSubmitting(true)
 
-  if (!listing) {
-    return (
-      <main style={{ padding: '20px', fontFamily: 'system-ui' }}>
-        <
+    if (!name.trim() || !phone.trim()) {
+      alert('Please fill in your name and phone number')
+      setIsSubmitting(false)
+      return
+    }
+
+    // Save booking details temporarily
+    const bookingData = {
+      listingId: id,
+      title: listing.title,
+      price: listing.price,
+      category: listing.category,
+      location: listing.location,
+      provider: listing.provider,
+      customerName: name,
+      customerPhone: phone,
+      preferredDate,
