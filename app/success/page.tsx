@@ -1,8 +1,19 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 export default function SuccessPage() {
+  const [booking, setBooking] = useState<any>(null)
+
+  useEffect(() => {
+    // Get the last booking from localStorage
+    const saved = localStorage.getItem('lastBooking')
+    if (saved) {
+      setBooking(JSON.parse(saved))
+    }
+  }, [])
+
   return (
     <main style={{ 
       padding: '20px', 
@@ -10,7 +21,7 @@ export default function SuccessPage() {
       maxWidth: '500px', 
       margin: '0 auto',
       textAlign: 'center',
-      paddingTop: '60px'
+      paddingTop: '50px'
     }}>
       <div style={{
         width: '70px',
@@ -26,25 +37,32 @@ export default function SuccessPage() {
         ✓
       </div>
 
-      <h1 style={{ marginBottom: '12px' }}>Booking Confirmed</h1>
-      <p style={{ color: '#666', marginBottom: '30px', lineHeight: '1.5' }}>
-        Your service has been booked. The provider will contact you soon.
-      </p>
+      <h1 style={{ marginBottom: '12px' }}>Booking Confirmed!</h1>
+      
+      {booking ? (
+        <div style={{ 
+          textAlign: 'left',
+          backgroundColor: '#f9fafb',
+          borderRadius: '12px',
+          padding: '16px',
+          marginBottom: '24px'
+        }}>
+          <p style={{ margin: '0 0 6px 0', fontWeight: '600' }}>{booking.title}</p>
+          <p style={{ margin: '0 0 4px 0', color: '#666', fontSize: '14px' }}>
+            {booking.category} • {booking.location}
+          </p>
+          <p style={{ margin: '0 0 4px 0', color: '#666', fontSize: '14px' }}>
+            Provider: {booking.provider}
+          </p>
+          <p style={{ margin: '8px 0 0 0', fontWeight: 'bold', color: '#7c3aed' }}>
+            {booking.price} π paid
+          </p>
+        </div>
+      ) : (
+        <p style={{ color: '#666', marginBottom: '24px' }}>
+          Your service has been booked successfully.
+        </p>
+      )}
 
       <Link
-        href="/listings"
-        style={{
-          display: 'inline-block',
-          backgroundColor: '#7c3aed',
-          color: 'white',
-          padding: '12px 28px',
-          borderRadius: '8px',
-          textDecoration: 'none',
-          fontWeight: '500'
-        }}
-      >
-        Back to Services
-      </Link>
-    </main>
-  )
-}
+        href="/
