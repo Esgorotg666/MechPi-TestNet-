@@ -26,9 +26,4 @@ export default function ListingsPage() {
       price: 120,
       category: "Brakes",
       location: "Inland Empire",
-      provider: "BrakeKing"
-    }
-  ]
-
-  const handleBook = (listing: any) => {
-    alert(`Booking: ${listing.title}\nPrice: ${listing.price}
+      provider: "Brake
