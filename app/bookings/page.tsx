@@ -29,6 +29,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [cancellingIndex, setCancellingIndex] = useState<number | null>(null)
 
   useEffect(() => {
     try {
@@ -57,18 +58,50 @@ export default function BookingsPage() {
     }
   }, [])
 
-  const cancelBooking = (index: number) => {
+  const cancelBooking = async (index: number) => {
     const confirmed = window.confirm('Are you sure you want to cancel this booking?')
     if (!confirmed) return
 
+    // 1. Optimistic update — change UI immediately
+    const previousBookings = [...bookings]
     const updated = [...bookings]
     updated[index] = {
       ...updated[index],
       status: 'Cancelled'
     }
-
     setBookings(updated)
-    localStorage.setItem('mechpi_bookings', JSON.stringify(updated))
+    setCancellingIndex(index)
+
+    try {
+      // 2. Save to storage
+      localStorage.setItem('mechpi_bookings', JSON.stringify(updated))
+
+      // 3. Restore the time slot back to the listing (if it had one)
+      const booking = previousBookings[index]
+      if (booking.selectedSlot && booking.listingId) {
+        const [date, time] = booking.selectedSlot.split('|')
+        const listings = JSON.parse(localStorage.getItem('mechpi_listings') || '[]')
+        const listingIndex = listings.findIndex((l: any) => l.id === booking.listingId)
+
+        if (listingIndex !== -1) {
+          const slots = listings[listingIndex].availableSlots || []
+          const slotExists = slots.some((s: any) => s.date === date && s.time === time)
+          
+          if (!slotExists) {
+            listings[listingIndex].availableSlots = [...slots, { date, time }]
+            localStorage.setItem('mechpi_listings', JSON.stringify(listings))
+          }
+        }
+      }
+
+    } catch (error) {
+      // 4. Rollback if something fails
+      console.error('Failed to cancel booking:', error)
+      setBookings(previousBookings)
+      alert('Failed to cancel booking. Please try again.')
+    } finally {
+      setCancellingIndex(null)
+    }
   }
 
   return (
@@ -112,7 +145,9 @@ export default function BookingsPage() {
                 border: '1px solid #e5e7eb',
                 borderRadius: '12px',
                 padding: '16px',
-                backgroundColor: '#fff'
+                backgroundColor: '#fff',
+                opacity: cancellingIndex === index ? 0.6 : 1,
+                transition: 'opacity 0.2s'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
@@ -142,10 +177,10 @@ export default function BookingsPage() {
                 </p>
               )}
 
-              {/* Cancel Button */}
               {booking.status !== 'Cancelled' && booking.status !== 'Completed' && (
                 <button
                   onClick={() => cancelBooking(index)}
+                  disabled={cancellingIndex === index}
                   style={{
                     marginTop: '12px',
                     backgroundColor: '#fee2e2',
@@ -155,10 +190,11 @@ export default function BookingsPage() {
                     borderRadius: '6px',
                     fontSize: '13px',
                     fontWeight: '500',
-                    cursor: 'pointer'
+                    cursor: cancellingIndex === index ? 'not-allowed' : 'pointer',
+                    opacity: cancellingIndex === index ? 0.7 : 1
                   }}
                 >
-                  Cancel Booking
+                  {cancellingIndex === index ? 'Cancelling...' : 'Cancel Booking'}
                 </button>
               )}
             </div>
