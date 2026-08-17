@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Toast from '@/components/Toast'
 
 function StatusBadge({ status }: { status: string }) {
   const styles: any = {
@@ -30,6 +31,10 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [cancellingIndex, setCancellingIndex] = useState<number | null>(null)
+  const [toast, setToast] = useState<{ message: string, type: 'error' | 'success' }>({
+    message: '',
+    type: 'error'
+  })
 
   useEffect(() => {
     try {
@@ -53,6 +58,7 @@ export default function BookingsPage() {
       setBookings(allBookings)
     } catch (error) {
       console.error('Error loading bookings:', error)
+      setToast({ message: 'Failed to load bookings', type: 'error' })
     } finally {
       setLoading(false)
     }
@@ -62,21 +68,21 @@ export default function BookingsPage() {
     const confirmed = window.confirm('Are you sure you want to cancel this booking?')
     if (!confirmed) return
 
-    // 1. Optimistic update — change UI immediately
     const previousBookings = [...bookings]
     const updated = [...bookings]
     updated[index] = {
       ...updated[index],
       status: 'Cancelled'
     }
+
+    // Optimistic update
     setBookings(updated)
     setCancellingIndex(index)
 
     try {
-      // 2. Save to storage
       localStorage.setItem('mechpi_bookings', JSON.stringify(updated))
 
-      // 3. Restore the time slot back to the listing (if it had one)
+      // Restore the time slot
       const booking = previousBookings[index]
       if (booking.selectedSlot && booking.listingId) {
         const [date, time] = booking.selectedSlot.split('|')
@@ -94,11 +100,11 @@ export default function BookingsPage() {
         }
       }
 
+      setToast({ message: 'Booking cancelled successfully', type: 'success' })
     } catch (error) {
-      // 4. Rollback if something fails
       console.error('Failed to cancel booking:', error)
       setBookings(previousBookings)
-      alert('Failed to cancel booking. Please try again.')
+      setToast({ message: 'Failed to cancel booking. Please try again.', type: 'error' })
     } finally {
       setCancellingIndex(null)
     }
@@ -190,8 +196,7 @@ export default function BookingsPage() {
                     borderRadius: '6px',
                     fontSize: '13px',
                     fontWeight: '500',
-                    cursor: cancellingIndex === index ? 'not-allowed' : 'pointer',
-                    opacity: cancellingIndex === index ? 0.7 : 1
+                    cursor: cancellingIndex === index ? 'not-allowed' : 'pointer'
                   }}
                 >
                   {cancellingIndex === index ? 'Cancelling...' : 'Cancel Booking'}
@@ -201,6 +206,12 @@ export default function BookingsPage() {
           ))}
         </div>
       )}
+
+      <Toast 
+        message={toast.message} 
+        type={toast.type} 
+        onClose={() => setToast({ message: '', type: 'error' })} 
+      />
     </main>
   )
 }
