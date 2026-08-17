@@ -3,36 +3,65 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
+function StatusBadge({ status }: { status: string }) {
+  const styles: any = {
+    Confirmed: {
+      backgroundColor: '#dcfce7',
+      color: '#166534'
+    },
+    Pending: {
+      backgroundColor: '#fef3c7',
+      color: '#92400e'
+    },
+    Completed: {
+      backgroundColor: '#e0e7ff',
+      color: '#3730a3'
+    },
+    Cancelled: {
+      backgroundColor: '#fee2e2',
+      color: '#991b1b'
+    }
+  }
+
+  const style = styles[status] || styles.Confirmed
+
+  return (
+    <span style={{
+      fontSize: '12px',
+      fontWeight: '500',
+      padding: '3px 10px',
+      borderRadius: '999px',
+      ...style
+    }}>
+      {status}
+    </span>
+  )
+}
+
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     try {
-      // For now we store bookings in localStorage
-      // Later this will come from Supabase
       const saved = localStorage.getItem('mechpi_bookings')
-      if (saved) {
-        setBookings(JSON.parse(saved))
-      }
+      let allBookings = saved ? JSON.parse(saved) : []
 
-      // Also check the last booking
       const last = localStorage.getItem('lastBooking')
       if (last) {
         const lastBooking = JSON.parse(last)
-        const existing = saved ? JSON.parse(saved) : []
-        
-        // Add it if it's not already in the list
-        const alreadyExists = existing.some((b: any) => 
+        const alreadyExists = allBookings.some((b: any) => 
           b.createdAt === lastBooking.createdAt
         )
         
         if (!alreadyExists) {
-          const updated = [lastBooking, ...existing]
-          localStorage.setItem('mechpi_bookings', JSON.stringify(updated))
-          setBookings(updated)
+          lastBooking.status = 'Confirmed'
+          allBookings = [lastBooking, ...allBookings]
+          localStorage.setItem('mechpi_bookings', JSON.stringify(allBookings))
         }
       }
+
+      setBookings(allBookings)
     } catch (error) {
       console.error('Error loading bookings:', error)
     } finally {
@@ -84,17 +113,11 @@ export default function BookingsPage() {
                 backgroundColor: '#fff'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <h2 style={{ margin: 0, fontSize: '17px' }}>{booking.title}</h2>
-                <span style={{
-                  fontSize: '12px',
-                  backgroundColor: '#dcfce7',
-                  color: '#166534',
-                  padding: '2px 8px',
-                  borderRadius: '999px'
-                }}>
-                  Confirmed
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <h2 style={{ margin: 0, fontSize: '17px', paddingRight: '12px' }}>
+                  {booking.title}
+                </h2>
+                <StatusBadge status={booking.status || 'Confirmed'} />
               </div>
 
               <p style={{ margin: '0 0 4px 0', color: '#666', fontSize: '14px' }}>
