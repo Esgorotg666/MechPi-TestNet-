@@ -10,6 +10,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+      </head>
       <body>{children}</body>
     </html>
   )
