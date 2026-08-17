@@ -31,4 +31,21 @@ export default function Home() {
 
   return (
     <main style={{ padding: '20px', fontFamily: 'system-ui', maxWidth: '500px', margin: '0 auto' }}>
-      <h
+      <h1 style={{ marginBottom: '8px' }}>MechPi</h1>
+      <p style={{ color: '#666', marginBottom: '24px' }}>
+        Local auto repair & services marketplace paid with Pi
+      </p>
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : user ? (
+        <div>
+          <p style={{ marginBottom: '20px' }}>
+            Logged in as: <strong>{user.username}</strong>
+          </p>
+          
+          <Link 
+            href="/listings"
+            style={{
+              display: 'block',
+              backgroundColor: '#7
