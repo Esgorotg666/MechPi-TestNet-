@@ -11,23 +11,36 @@ export default function CreateListingPage() {
   const [category, setCategory] = useState('Oil Change')
   const [location, setLocation] = useState('')
   const [description, setDescription] = useState('')
-  const [imageUrls, setImageUrls] = useState<string[]>([''])
+  const [images, setImages] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  const addImageField = () => {
-    setImageUrls([...imageUrls, ''])
+  const handleImageChange = (e: any) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    Array.from(files).forEach((file: any) => {
+      if (!file.type.startsWith('image/')) {
+        setError('Only image files are allowed')
+        return
+      }
+
+      // Limit file size to 1MB
+      if (file.size > 1 * 1024 * 1024) {
+        setError('Image must be smaller than 1MB')
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImages(prev => [...prev, reader.result as string])
+      }
+      reader.readAsDataURL(file)
+    })
   }
 
-  const updateImageUrl = (index: number, value: string) => {
-    const updated = [...imageUrls]
-    updated[index] = value
-    setImageUrls(updated)
-  }
-
-  const removeImageField = (index: number) => {
-    if (imageUrls.length === 1) return
-    setImageUrls(imageUrls.filter((_, i) => i !== index))
+  const removeImage = (index: number) => {
+    setImages(images.filter((_, i) => i !== index))
   }
 
   const handleSubmit = (e: any) => {
@@ -39,9 +52,6 @@ export default function CreateListingPage() {
       if (!title.trim()) throw new Error('Please enter a service title')
       if (!price || Number(price) <= 0) throw new Error('Please enter a valid price')
 
-      // Filter out empty image URLs
-      const cleanImages = imageUrls.filter(url => url.trim() !== '')
-
       const newListing = {
         id: Date.now().toString(),
         title: title.trim(),
@@ -49,7 +59,7 @@ export default function CreateListingPage() {
         category,
         location: location.trim() || 'Not specified',
         description: description.trim(),
-        images: cleanImages,
+        images: images,
         provider: 'You',
         createdAt: new Date().toISOString(),
         status: 'Active',
@@ -145,12 +155,92 @@ export default function CreateListingPage() {
           />
         </div>
 
-        {/* Image Gallery Section */}
+        {/* Image Upload Section */}
         <div>
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-            Images (optional)
+            Photos
           </label>
-          
-          {imageUrls.map((url, index) => (
-            <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-              <input
+
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageChange}
+            style={{ marginBottom: '12px' }}
+          />
+
+          {images.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+              {images.map((img, index) => (
+                <div key={index} style={{ position: 'relative' }}>
+                  <img
+                    src={img}
+                    alt={`Preview ${index + 1}`}
+                    style={{
+                      width: '80px',
+                      height: '80px',
+                      objectFit: 'cover',
+                      borderRadius: '8px',
+                      border: '1px solid #e5e7eb'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    style={{
+                      position: 'absolute',
+                      top: '-6px',
+                      right: '-6px',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '22px',
+                      height: '22px',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#888' }}>
+            Max 1MB per image. Base64 (temporary storage)
+          </p>
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Description</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Describe the service..."
+            rows={4}
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '16px' }}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          style={{
+            backgroundColor: isSubmitting ? '#a78bfa' : '#7c3aed',
+            color: 'white',
+            border: 'none',
+            padding: '14px',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: '600',
+            marginTop: '10px',
+            opacity: isSubmitting ? 0.7 : 1
+          }}
+        >
+          {isSubmitting ? 'Saving...' : 'Create Listing'}
+        </button>
+      </form>
+    </main>
+  )
+}
